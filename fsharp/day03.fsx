@@ -9,21 +9,16 @@ data
     seq 
     >> Seq.splitInto 2 
     >> Seq.map set 
-    >> Seq.reduce Set.intersect 
-    >> Set.toList 
-    >> List.head
+    >> Set.intersectMany
+    >> Seq.head
     >> charToPriority)
-|> printfn "Day 2 Task 1: %i"
+|> printfn "Day 3 Task 1: %i"
 
 data
 |> Array.chunkBySize 3
 |> Array.sumBy (
-  Array.map (seq >> set)
-  >> Array.reduce Set.intersect
-  >> Set.toList
-  >> List.head
+  Array.map set
+  >> Set.intersectMany
+  >> Seq.head
   >> charToPriority)
-|> printfn "Day 2 Task 2: %i"
-
-
-
+|> printfn "Day 3 Task 2: %i"
