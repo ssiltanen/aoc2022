@@ -1,8 +1,8 @@
-let (|CdHome|_|) (cmd: string) = if cmd = "$ cd /" then Some "/" else None
-let (|CdOut|_|) (cmd: string) = if cmd = "$ cd .." then Some ".." else None
-let (|CdIn|_|) (cmd: string) = if cmd.StartsWith("$ cd ") then cmd.Split(" ") |> Array.last |> Some else None
-let (|File|_|) (cmd: string) = 
-  match cmd.Split(" ") with
+let (|CdHome|_|) = function [|"$"; "cd"; "/"|] -> Some "/" | _ -> None
+let (|CdOut|_|) = function [|"$"; "cd"; ".."|] -> Some ".." | _ -> None
+let (|CdIn|_|) = function [|"$"; "cd"; dir|] -> Some dir | _ -> None
+let (|File|_|) (cmd: string[]) = 
+  match cmd with
   | [|sizeOrDir; _|] -> 
     match System.Int32.TryParse(sizeOrDir) with
     | true, size -> Some size
@@ -11,16 +11,18 @@ let (|File|_|) (cmd: string) =
 
 let directories = 
   System.IO.File.ReadAllLines "data/day07.txt"
-  |> Array.fold (fun (revCwd, files) cmd -> 
-    match cmd with
+  |> Array.fold (fun (revCwd, files) cmd ->
+    let formDir = List.rev >> String.concat "/"
+    match cmd.Split(" ") with
     | CdHome _ -> [], files
     | CdOut _ -> List.tail revCwd, files
-    | CdIn dir -> dir :: revCwd, (revCwd |> List.rev |> String.concat "/", 0) :: files
-    | File size -> revCwd, (revCwd |> List.rev |> String.concat "/", size) :: files
+    | CdIn dir -> dir :: revCwd, (formDir revCwd, 0) :: files
+    | File size -> revCwd, (formDir revCwd, size) :: files
     | _ -> revCwd, files ) ([], [])
   |> snd
   |> List.groupBy fst
-  |> List.map (fun (dir, group) -> (if System.String.IsNullOrEmpty(dir) then "/" else $"/{dir}/"), group |> List.map snd |> List.sum)
+  |> List.map (fun (dir, group) ->
+    (if System.String.IsNullOrEmpty(dir) then "/" else $"/{dir}/"), group |> List.map snd |> List.sum)
   |> List.sortBy fst
   |> List.fold (fun acc (dir, size) ->
     let updatedAcc =
